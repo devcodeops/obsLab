@@ -1,6 +1,6 @@
 {
   "name": "obslab",
-  "version": "0.1.0",
+  "version": "0.2.0-SNAPSHOT",
   "private": true,
   "description": "Microservices chaos engineering laboratory with REST workflow simulation",
   "license": "MIT",
