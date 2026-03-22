@@ -9,7 +9,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "pnpm --filter @obslab/shared build && pnpm --filter @obslab/db build && pnpm --filter @obslab/db prisma:generate && pnpm --filter @obslab/orchestrator build && pnpm --filter @obslab/worker build && pnpm --filter @obslab/web build",
+    "build": "pnpm --filter @obslab/shared build && pnpm --filter @obslab/db prisma:generate && pnpm --filter @obslab/db build && pnpm --filter @obslab/orchestrator build && pnpm --filter @obslab/worker build && pnpm --filter @obslab/web build",
     "dev": "pnpm --filter @obslab/shared build && pnpm --filter @obslab/db prisma:generate && concurrently -n orch,alpha,beta,gamma,web -c blue,green,yellow,magenta,cyan \"pnpm --filter @obslab/orchestrator dev\" \"pnpm --filter @obslab/worker dev:alpha\" \"pnpm --filter @obslab/worker dev:beta\" \"pnpm --filter @obslab/worker dev:gamma\" \"pnpm --filter @obslab/web dev\"",
     "lint": "pnpm -r lint",
     "test": "vitest run",
