@@ -1,0 +1,34 @@
+{
+  "name": "obslab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Microservices chaos engineering laboratory with REST workflow simulation",
+  "license": "MIT",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm --filter @obslab/shared build && pnpm --filter @obslab/db build && pnpm --filter @obslab/db prisma:generate && pnpm --filter @obslab/orchestrator build && pnpm --filter @obslab/worker build && pnpm --filter @obslab/web build",
+    "dev": "pnpm --filter @obslab/shared build && pnpm --filter @obslab/db prisma:generate && concurrently -n orch,alpha,beta,gamma,web -c blue,green,yellow,magenta,cyan \"pnpm --filter @obslab/orchestrator dev\" \"pnpm --filter @obslab/worker dev:alpha\" \"pnpm --filter @obslab/worker dev:beta\" \"pnpm --filter @obslab/worker dev:gamma\" \"pnpm --filter @obslab/web dev\"",
+    "lint": "pnpm -r lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "pnpm -r typecheck",
+    "docker:up": "docker compose -f infra/docker-compose.yml up --build -d",
+    "docker:down": "docker compose -f infra/docker-compose.yml down",
+    "docker:dev": "docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up --build",
+    "docker:dev:down": "docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml down -v",
+    "prisma:generate": "pnpm --filter @obslab/db prisma:generate",
+    "prisma:migrate": "pnpm --filter @obslab/db prisma:migrate",
+    "prisma:deploy": "pnpm --filter @obslab/db prisma:deploy",
+    "prisma:seed": "pnpm --filter @obslab/db prisma:seed"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "3.2.4",
+    "concurrently": "^9.1.0",
+    "typescript": "~5.7.2",
+    "vitest": "^3.2.4"
+  }
+}

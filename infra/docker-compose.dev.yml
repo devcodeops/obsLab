@@ -1,0 +1,119 @@
+services:
+  orchestrator:
+    build:
+      context: ..
+      dockerfile: apps/orchestrator/Dockerfile
+      target: base
+    volumes:
+      - ..:/app
+      - orchestrator_modules:/app/node_modules
+    working_dir: /app
+    command: >
+      sh -c "
+        pnpm install --frozen-lockfile 2>/dev/null || pnpm install &&
+        pnpm --filter @obslab/shared build &&
+        pnpm --filter @obslab/db prisma:generate &&
+        pnpm --filter @obslab/db prisma:deploy &&
+        pnpm --filter @obslab/orchestrator dev
+      "
+    environment:
+      SERVICE_NAME: orchestrator
+      NODE_ENV: development
+      ORCHESTRATOR_PORT: 3001
+      ENABLE_SWAGGER: "true"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-obslab}?schema=public
+      SVC_ALPHA_URL: http://svc-alpha:3011
+      SVC_BETA_URL: http://svc-beta:3012
+      SVC_GAMMA_URL: http://svc-gamma:3013
+      WEB_URL: http://web:3000
+      ORCHESTRATOR_SELF_URL: http://orchestrator:3001
+
+  svc-alpha:
+    build:
+      context: ..
+      dockerfile: apps/worker/Dockerfile
+      target: base
+    volumes:
+      - ..:/app
+      - alpha_modules:/app/node_modules
+    working_dir: /app
+    command: >
+      sh -c "
+        pnpm install --frozen-lockfile 2>/dev/null || pnpm install &&
+        pnpm --filter @obslab/shared build &&
+        SERVICE_NAME=svc-alpha WORKER_PORT=3011 SVC_BETA_URL=http://svc-beta:3012 SVC_GAMMA_URL=http://svc-gamma:3013 pnpm --filter @obslab/worker dev:alpha
+      "
+    environment:
+      SERVICE_NAME: svc-alpha
+      WORKER_PORT: 3011
+      ENABLE_SWAGGER: "true"
+      SVC_BETA_URL: http://svc-beta:3012
+      SVC_GAMMA_URL: http://svc-gamma:3013
+
+  svc-beta:
+    build:
+      context: ..
+      dockerfile: apps/worker/Dockerfile
+      target: base
+    volumes:
+      - ..:/app
+      - beta_modules:/app/node_modules
+    working_dir: /app
+    command: >
+      sh -c "
+        pnpm install --frozen-lockfile 2>/dev/null || pnpm install &&
+        pnpm --filter @obslab/shared build &&
+        SERVICE_NAME=svc-beta WORKER_PORT=3012 pnpm --filter @obslab/worker dev:beta
+      "
+    environment:
+      SERVICE_NAME: svc-beta
+      WORKER_PORT: 3012
+      ENABLE_SWAGGER: "true"
+
+  svc-gamma:
+    build:
+      context: ..
+      dockerfile: apps/worker/Dockerfile
+      target: base
+    volumes:
+      - ..:/app
+      - gamma_modules:/app/node_modules
+    working_dir: /app
+    command: >
+      sh -c "
+        pnpm install --frozen-lockfile 2>/dev/null || pnpm install &&
+        pnpm --filter @obslab/shared build &&
+        SERVICE_NAME=svc-gamma WORKER_PORT=3013 pnpm --filter @obslab/worker dev:gamma
+      "
+    environment:
+      SERVICE_NAME: svc-gamma
+      WORKER_PORT: 3013
+      ENABLE_SWAGGER: "true"
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+      target: base
+    volumes:
+      - ..:/app
+      - web_modules:/app/node_modules
+    working_dir: /app
+    command: >
+      sh -c "
+        pnpm install --frozen-lockfile 2>/dev/null || pnpm install &&
+        pnpm --filter @obslab/web dev
+      "
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+
+volumes:
+  orchestrator_modules:
+  alpha_modules:
+  beta_modules:
+  gamma_modules:
+  web_modules:

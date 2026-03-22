@@ -1,0 +1,119 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: obslab-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-obslab}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  orchestrator:
+    build:
+      context: ..
+      dockerfile: apps/orchestrator/Dockerfile
+    container_name: obslab-orchestrator
+    ports:
+      - "3001:3001"
+    environment:
+      SERVICE_NAME: orchestrator
+      NODE_ENV: production
+      ORCHESTRATOR_PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-obslab}?schema=public
+      SVC_ALPHA_URL: http://svc-alpha:3011
+      SVC_BETA_URL: http://svc-beta:3012
+      SVC_GAMMA_URL: http://svc-gamma:3013
+      WEB_URL: http://web:3000
+      ORCHESTRATOR_SELF_URL: http://orchestrator:3001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      svc-alpha:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  svc-alpha:
+    build:
+      context: ..
+      dockerfile: apps/worker/Dockerfile
+    container_name: obslab-svc-alpha
+    restart: unless-stopped
+    ports:
+      - "3011:3011"
+    environment:
+      SERVICE_NAME: svc-alpha
+      WORKER_PORT: 3011
+      SVC_BETA_URL: http://svc-beta:3012
+      SVC_GAMMA_URL: http://svc-gamma:3013
+    depends_on:
+      - svc-beta
+      - svc-gamma
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3011/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  svc-beta:
+    build:
+      context: ..
+      dockerfile: apps/worker/Dockerfile
+    container_name: obslab-svc-beta
+    restart: unless-stopped
+    ports:
+      - "3012:3012"
+    environment:
+      SERVICE_NAME: svc-beta
+      WORKER_PORT: 3012
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3012/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  svc-gamma:
+    build:
+      context: ..
+      dockerfile: apps/worker/Dockerfile
+    container_name: obslab-svc-gamma
+    restart: unless-stopped
+    ports:
+      - "3013:3013"
+    environment:
+      SERVICE_NAME: svc-gamma
+      WORKER_PORT: 3013
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3013/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    container_name: obslab-web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - orchestrator
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:

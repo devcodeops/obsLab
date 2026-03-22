@@ -1,0 +1,23 @@
+{
+  "name": "@obslab/db",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo ok",
+    "typecheck": "tsc --noEmit",
+    "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema=prisma/schema.prisma",
+    "prisma:deploy": "prisma migrate deploy --schema=prisma/schema.prisma",
+    "prisma:seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.2.1"
+  },
+  "devDependencies": {
+    "prisma": "^6.2.1",
+    "tsx": "^4.19.2"
+  }
+}

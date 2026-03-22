@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ChaosMode {
+  normal
+  forceStatus
+  probabilisticError
+  latency
+  timeout
+}
+
+model Run {
+  id             String    @id @default(uuid())
+  workflowName   String
+  status         String    @default("running")
+  iterations     Int
+  concurrency    Int
+  payloadSize    Int?
+  clientTimeoutMs Int
+  retries        Int       @default(0)
+  backoffMs      Int       @default(0)
+  startedAt      DateTime  @default(now())
+  finishedAt     DateTime?
+  totalCalls     Int       @default(0)
+  successCalls   Int       @default(0)
+  errorCalls     Int       @default(0)
+  timeoutCalls   Int       @default(0)
+  p50LatencyMs   Float?
+  p95LatencyMs   Float?
+
+  calls Call[]
+}
+
+model Call {
+  id           String   @id
+  runId        String
+  parentCallId String?
+  requestId    String
+  fromService  String
+  toService    String
+  route        String
+  method       String
+  statusCode   Int?
+  durationMs   Int
+  errorType    String?
+  errorMessage String?
+  createdAt    DateTime @default(now())
+
+  run Run @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([parentCallId])
+}
+
+model ServiceChaosConfig {
+  serviceName        String    @id
+  mode               ChaosMode @default(normal)
+  forceStatusCode    Int?
+  errorProbability   Float?
+  fixedLatencyMs     Int?
+  randomLatencyMinMs Int?
+  randomLatencyMaxMs Int?
+  timeoutProbability Float?
+  updatedAt          DateTime  @updatedAt
+}
