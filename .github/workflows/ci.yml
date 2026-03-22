@@ -46,11 +46,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma client
-        run: pnpm --filter @obslab/db prisma:generate
-
-      - name: Build shared package
-        run: pnpm --filter @obslab/shared build
+      - name: Build shared and db packages
+        run: pnpm --filter @obslab/shared build && pnpm --filter @obslab/db build && pnpm --filter @obslab/db prisma:generate
 
       - run: pnpm typecheck
 
@@ -68,6 +65,9 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+
+      - name: Build shared and db packages
+        run: pnpm --filter @obslab/shared build && pnpm --filter @obslab/db build && pnpm --filter @obslab/db prisma:generate
 
       - run: pnpm test
 
